@@ -15,8 +15,8 @@ export abstract class BaseService {
         return this.plainToClass(this.httpClient.get<T>(`${this.baseUrl}`), classType);
     }
 
-    protected getStream<T>(classType: ClassType<T>, url?: string): Observable<T> {
-        return this.plainToClass(this.createEventSource(`${this.baseUrl}`), classType);
+    protected getStream<T>(classType: ClassType<T>, url?: string): Observable<T[]> {
+        return this.plainToClassArray(this.createEventSource(`${this.baseUrl}`), classType);
     }
 
     protected executeSave<T>(object: T, classType: ClassType<T>, url?: string): Observable<T> {
@@ -27,19 +27,21 @@ export abstract class BaseService {
         }
     }
 
-    private createEventSource(url: string): Observable<any[]> {
-        return new Observable((observer) => {
-            let eventSource = new EventSource(url);
+    private createEventSource<T>(url: string): Observable<T[]> {
+        return new Observable<T[]>((observer) => {
+            const eventSource = new EventSource(url);
+            let result: T[] = [];
             eventSource.onmessage = (message) => {
                 const json = JSON.parse(message.data);
                 console.debug('Message received ', json);
-                observer.next(json);
+                result.push(json);
+                observer.next(result);
             }
+
             eventSource.onerror = (error) => {
                 if (eventSource.readyState === 0) {
-                    console.debug('The stream has been closed by the server.');
-                    eventSource.close();
-                    observer.unsubscribe();
+                    console.info('The stream has been closed by the server.', error);
+                    result = [];
                 } else {
                     observer.error('EventSource error: ' + error);
                 }

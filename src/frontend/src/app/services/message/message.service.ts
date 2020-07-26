@@ -13,7 +13,7 @@ export class MessageService extends BaseService {
         super(httpClient, "api/messages");
     }
 
-    getMessages(): Observable<Message> {
+    getMessages(): Observable<Message[]> {
         return this.getStream(Message)
     }
 

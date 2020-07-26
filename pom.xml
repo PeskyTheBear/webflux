@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.pesky</groupId>
-    <artifactId>webfulx</artifactId>
+    <artifactId>webflux</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>webflux</name>
     <description>Demo project for webflux</description>

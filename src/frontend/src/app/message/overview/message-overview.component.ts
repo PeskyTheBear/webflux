@@ -17,7 +17,7 @@ export class MessageOverviewComponent implements OnInit {
 
     ngOnInit(): void {
         this.messageService.getMessages().subscribe(messages => {
-            this.messages.push(messages)
+            this.messages = messages;
             this.changeDetectorRef.detectChanges();
         })
 
