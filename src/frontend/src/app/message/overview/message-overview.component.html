@@ -1,0 +1,25 @@
+<app-message-edit>
+</app-message-edit>
+<mat-card>
+    <mat-card-header>
+        <mat-card-title>
+            Messages
+        </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Message ID</th>
+                <th>Content</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let message of (messages)">
+                <td>{{message.id}}</td>
+                <td>{{message.content.substr(0, 30)}}...</td>
+            <tr>
+            </tbody>
+        </table>
+    </mat-card-content>
+</mat-card>
