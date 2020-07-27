@@ -3,28 +3,34 @@ import {Observable} from "rxjs";
 import {map} from "rxjs/operators";
 import {plainToClass} from "class-transformer";
 import {ClassType} from "class-transformer/ClassTransformer";
+import {NgZone} from "@angular/core";
+
 
 export abstract class BaseService {
 
-    protected constructor(protected httpClient: HttpClient, private baseUrl: string) {
+    private zone = new NgZone({enableLongStackTrace: false});
+
+    protected constructor(protected httpClient: HttpClient, private baseUrl: string, private identifierName: string) {
     }
 
-    protected abstract identifierName(): string
-
-    protected executeGetSingular<T>(classType: ClassType<T>, url?: string): Observable<T> {
-        return this.plainToClass(this.httpClient.get<T>(`${this.baseUrl}`), classType);
+    protected getSingular<T>(classType: ClassType<T>, url?: string): Observable<T> {
+        return this.plainToClass(this.httpClient.get<T>(this.createUrl(url)), classType);
     }
 
     protected getStream<T>(classType: ClassType<T>, url?: string): Observable<T[]> {
-        return this.plainToClassArray(this.createEventSource(`${this.baseUrl}`), classType);
+        return this.plainToClassArray(this.createEventSource(this.createUrl(url)), classType);
     }
 
-    protected executeSave<T>(object: T, classType: ClassType<T>, url?: string): Observable<T> {
-        if (object[this.identifierName()]) {
-            return this.plainToClass(this.httpClient.put<T>(`${this.baseUrl}`, object), classType);
+    protected save<T>(object: T, classType: ClassType<T>, url?: string): Observable<T> {
+        if (object[this.identifierName]) {
+            return this.plainToClass(this.httpClient.put<T>(this.createUrl(url), object), classType);
         } else {
-            return this.plainToClass(this.httpClient.post<T>(`${this.baseUrl}`, object), classType);
+            return this.plainToClass(this.httpClient.post<T>(this.createUrl(url), object), classType);
         }
+    }
+
+    private createUrl(optionalUrl: string): string {
+        return optionalUrl ? this.baseUrl + optionalUrl : this.baseUrl;
     }
 
     private createEventSource<T>(url: string): Observable<T[]> {
@@ -32,19 +38,21 @@ export abstract class BaseService {
             const eventSource = new EventSource(url);
             let result: T[] = [];
             eventSource.onmessage = (message) => {
-                const json = JSON.parse(message.data);
-                console.debug('Message received ', json);
-                result.push(json);
-                observer.next(result);
+                this.zone.run(() => {
+                    result.push(JSON.parse(message.data));
+                    observer.next(result);
+                });
             }
 
             eventSource.onerror = (error) => {
-                if (eventSource.readyState === 0) {
-                    console.info('The stream has been closed by the server.', error);
-                    result = [];
-                } else {
-                    observer.error('EventSource error: ' + error);
-                }
+                this.zone.run(() => {
+                    if (eventSource.readyState === 0) {
+                        console.info('The stream has been closed by the server.', error);
+                        result = [];
+                    } else {
+                        observer.error(error);
+                    }
+                })
             }
         });
     }

@@ -10,7 +10,7 @@ import {BaseService} from "../base/base.service";
 export class MessageService extends BaseService {
 
     constructor(protected httpClient: HttpClient) {
-        super(httpClient, "api/messages");
+        super(httpClient, "api/messages", "id");
     }
 
     getMessages(): Observable<Message[]> {
@@ -18,11 +18,6 @@ export class MessageService extends BaseService {
     }
 
     saveMessage(message: Message): Observable<Message> {
-        return this.executeSave(message, Message)
+        return this.save(message, Message)
     }
-
-    protected identifierName(): string {
-        return "id";
-    }
-
 }

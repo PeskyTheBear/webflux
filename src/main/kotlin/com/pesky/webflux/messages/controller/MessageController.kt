@@ -6,6 +6,7 @@ import com.pesky.webflux.messages.MessageReactiveRepository
 import io.r2dbc.postgresql.api.PostgresqlConnection
 import io.r2dbc.postgresql.api.PostgresqlResult
 import io.r2dbc.spi.ConnectionFactory
+import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -17,7 +18,7 @@ import javax.annotation.PreDestroy
 @RequestMapping("api/messages")
 class MessageController(
         private val messageRepository: MessageReactiveRepository,
-        private val connectionFactory: ConnectionFactory,
+        connectionFactory: ConnectionFactory,
         private val objectMapper: ObjectMapper
 ) {
 
@@ -25,7 +26,7 @@ class MessageController(
 
     @PostConstruct
     private fun postConstruct() {
-        val statement = connection
+        connection
                 .createStatement("LISTEN message_notification")
                 .execute()
                 .flatMap(PostgresqlResult::getRowsUpdated)
@@ -37,10 +38,10 @@ class MessageController(
         connection.close().subscribe()
     }
 
-    @GetMapping()
+    @GetMapping(produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     fun getMessages(): Flux<String> {
         return connection.notifications
-                .map { it.getParameter() }
+                .map { it.parameter }
                 .let { this.messageRepository.findAll().map(objectMapper::writeValueAsString).mergeWith(it) }
     }
 

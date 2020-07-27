@@ -1,6 +1,7 @@
-import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {Message} from "../../models/message/message";
 import {MessageService} from "../../services/message/message.service";
+import {Observable} from "rxjs";
 
 @Component({
     selector: 'app-message',
@@ -8,19 +9,15 @@ import {MessageService} from "../../services/message/message.service";
 })
 export class MessageOverviewComponent implements OnInit {
 
-    messages: Message[] = [];
+    messages: Observable<Message[]>;
 
     displayedColumns: string[] = ['id', 'content'];
 
-    constructor(private messageService: MessageService, private changeDetectorRef: ChangeDetectorRef) {
+    constructor(private messageService: MessageService) {
     }
 
     ngOnInit(): void {
-        this.messageService.getMessages().subscribe(messages => {
-            this.messages = messages;
-            this.changeDetectorRef.detectChanges();
-        })
-
+        this.messages = this.messageService.getMessages();
     }
 
 }
